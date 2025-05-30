@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>🚚 Logistics Dashboard with QR</title>
+  <title>🚚 Logistics Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
     button { padding: 0.5rem 1rem; margin: 1rem 0; font-weight: bold; }
-    .batch { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 6px; }
+    .batch { border: 1px solid #ccc; padding: 1rem; margin-bottom: 2rem; border-radius: 6px; }
   </style>
 </head>
 <body>
   <h2>🚚 Logistics Dashboard</h2>
   <button id="connectWallet">🔗 Connect Wallet</button>
   <div id="walletAddress"></div>
-  <button onclick="loadLogisticsBatches()">📥 Load My Assigned Batches</button>
+
+  <button onclick="loadLogisticsBatches()">📦 Load Assigned Batches</button>
   <div id="batchList"></div>
 
   <script>
@@ -30,55 +31,49 @@
           { "internalType": "address", "name": "_installer", "type": "address" }
         ],
         "name": "createProductBatch",
-        "outputs": [
-          { "internalType": "address", "name": "", "type": "address" }
-        ],
+        "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
         "stateMutability": "nonpayable",
         "type": "function"
       },
       {
-        "inputs": [
-          { "internalType": "address", "name": "_logistics", "type": "address" }
-        ],
+        "inputs": [{ "internalType": "address", "name": "_logistics", "type": "address" }],
         "name": "getBatchesByLogistics",
-        "outputs": [
-          { "internalType": "address[]", "name": "", "type": "address[]" }
-        ],
+        "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
         "stateMutability": "view",
         "type": "function"
       }
     ];
 
     const batchABI = [
+      { "inputs": [], "name": "markPickedUp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
       { "inputs": [], "name": "currentStage", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
       { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
-      { "inputs": [], "name": "batchId", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
-      {
-        "anonymous": false,
-        "inputs": [
-          { "indexed": false, "internalType": "string", "name": "qrData", "type": "string" }
-        ],
-        "name": "QRCodeGenerated",
-        "type": "event"
-      }
+      { "inputs": [], "name": "batchId", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }
     ];
 
-    let provider, signer, registry;
+    let provider, signer, registry, userAddress;
 
     document.getElementById("connectWallet").onclick = async () => {
-      if (!window.ethereum) return alert("Install MetaMask.");
+      if (!window.ethereum) {
+        alert("Please install MetaMask.");
+        return;
+      }
 
       provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      document.getElementById("walletAddress").innerText = `✅ Connected: ${userAddress}`;
 
-      const address = await signer.getAddress();
-      document.getElementById("walletAddress").innerText = `✅ Connected: ${address}`;
       registry = new ethers.Contract(registryAddress, registryABI, signer);
     };
 
     async function loadLogisticsBatches() {
-      const userAddress = await signer.getAddress();
+      if (!registry || !userAddress) {
+        alert("Connect your wallet first.");
+        return;
+      }
+
       const batchAddresses = await registry.getBatchesByLogistics(userAddress);
       const container = document.getElementById("batchList");
       container.innerHTML = "";
@@ -86,31 +81,48 @@
       const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
 
       for (let address of batchAddresses) {
-        const batch = new ethers.Contract(address, batchABI, provider);
-
-        const desc = await batch.description();
-        const id = await batch.batchId();
+        const batch = new ethers.Contract(address, batchABI, signer);
         const stage = await batch.currentStage();
+        const desc = await batch.description();
+        const batchId = await batch.batchId();
 
         const div = document.createElement("div");
         div.className = "batch";
         div.innerHTML = `
-          <strong>Description:</strong> ${desc}<br>
-          <strong>Batch ID:</strong> ${id}<br>
-          <strong>Contract:</strong> ${address}<br>
-          <strong>Stage:</strong> ${stages[stage]}<br>
-          <canvas id="qr-${id}"></canvas>
+          <strong>Batch ID:</strong> ${batchId}<br/>
+          <strong>Description:</strong> ${desc}<br/>
+          <strong>Current Stage:</strong> ${stages[stage]}<br/>
+          <button onclick="markPickedUp('${address}', this)">🚛 Mark Picked Up</button>
+          <div class="qr" id="qr-${batchId}"></div>
         `;
         container.appendChild(div);
+      }
+    }
 
-        // Listen for QRCodeGenerated event
-        batch.on("QRCodeGenerated", (qrData) => {
-          const qr = new QRious({
-            element: document.getElementById(`qr-${id}`),
-            value: qrData,
-            size: 150
-          });
+    async function markPickedUp(address, btn) {
+      try {
+        const contract = new ethers.Contract(address, batchABI, signer);
+        const tx = await contract.markPickedUp();
+        await tx.wait();
+
+        const stage = await contract.currentStage();
+        const batchId = await contract.batchId();
+
+        btn.parentElement.querySelector("strong:nth-child(3)").innerText = `Current Stage: Picked Up`;
+
+        const qrDiv = btn.parentElement.querySelector(`#qr-${batchId}`);
+        qrDiv.innerHTML = "";
+        new QRCode(qrDiv, {
+          text: `Batch ${batchId} picked up at ${new Date().toISOString()}`,
+          width: 128,
+          height: 128
         });
+
+        btn.disabled = true;
+        btn.innerText = "✅ Picked Up";
+      } catch (err) {
+        console.error(err);
+        alert("Error marking batch as picked up.");
       }
     }
   </script>
