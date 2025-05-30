@@ -1,93 +1,118 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>🏗️ Create New Product Batch</title>
+  <title>Create New Product Batch</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; padding: 2rem; max-width: 700px; margin: auto; }
-    input, button { width: 100%; padding: 0.7rem; margin: 0.5rem 0; font-size: 1rem; }
-    button { font-weight: bold; background: #1f2b32; color: white; border: none; cursor: pointer; }
-    .status { margin-top: 1rem; font-weight: bold; }
+    body {
+      font-family: 'Inter', sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    h2 {
+      color: #1f2b32;
+    }
+    label {
+      font-weight: 600;
+      margin-top: 1rem;
+      display: block;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.2rem;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-family: 'Inter', sans-serif;
+    }
+    button {
+      background-color: #1f2b32;
+      color: white;
+      padding: 0.7rem 1rem;
+      border: none;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1rem;
+      font-family: 'Inter', sans-serif;
+    }
+    button:disabled {
+      background-color: #999;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-  <h2>🏗️ Create New Product Batch</h2>
-  <button onclick="connectWallet()">🔗 Connect Wallet</button>
-  <div id="walletStatus"></div>
 
-  <input id="description" placeholder="Product Description (e.g. 100 oak doors)" />
-  <input id="batchId" placeholder="Batch ID (e.g. Batch-XYZ123)" />
-  <input id="factory" placeholder="Factory Wallet Address (0x...)" />
-  <input id="logistics" placeholder="Logistics Wallet Address (0x...)" />
-  <input id="installer" placeholder="Installer Wallet Address (0x...)" />
+  <h2>🛠️ New Product Batch</h2>
+  <button onclick="connectWallet()">🔗 Connect Wallet</button>
+  <div id="walletAddress"></div>
+
+  <label for="batchId">Batch ID</label>
+  <input id="batchId" placeholder="e.g. Batch-021" />
+
+  <label for="description">Description</label>
+  <input id="description" placeholder="e.g. 100 Door Sets" />
+
+  <label for="factory">Factory Address</label>
+  <input id="factory" placeholder="0x..." />
+
+  <label for="logistics">Logistics Address</label>
+  <input id="logistics" placeholder="0x..." />
+
+  <label for="installer">Installer Address</label>
+  <input id="installer" placeholder="0x..." />
 
   <button onclick="createBatch()">🚀 Create Batch</button>
-  <div class="status" id="status"></div>
+  <div id="status"></div>
 
   <script>
     const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
 
-    const registryABI = [
-      {
-        "inputs": [
-          { "internalType": "string", "name": "_description", "type": "string" },
-          { "internalType": "string", "name": "_batchId", "type": "string" },
-          { "internalType": "address", "name": "_factory", "type": "address" },
-          { "internalType": "address", "name": "_logistics", "type": "address" },
-          { "internalType": "address", "name": "_installer", "type": "address" }
-        ],
-        "name": "createProductBatch",
-        "outputs": [
-          { "internalType": "address", "name": "", "type": "address" }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      }
-    ];
+    const registryABI = [/* full registry ABI here */];
 
     let provider, signer, registry;
 
     async function connectWallet() {
-      if (!window.ethereum) {
-        alert("Please install MetaMask.");
-        return;
-      }
+      if (!window.ethereum) return alert("Install MetaMask");
 
       provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       signer = provider.getSigner();
 
-      const address = await signer.getAddress();
-      document.getElementById("walletStatus").innerText = `✅ Connected: ${address}`;
-
+      const userAddress = await signer.getAddress();
+      document.getElementById("walletAddress").innerText = `✅ Connected: ${userAddress}`;
       registry = new ethers.Contract(registryAddress, registryABI, signer);
     }
 
     async function createBatch() {
-      if (!registry) {
-        alert("Connect your wallet first.");
-        return;
-      }
+      const batchId = document.getElementById("batchId").value.trim();
+      const desc = document.getElementById("description").value.trim();
+      const factory = document.getElementById("factory").value.trim();
+      const logistics = document.getElementById("logistics").value.trim();
+      const installer = document.getElementById("installer").value.trim();
+      const statusDiv = document.getElementById("status");
 
-      const description = document.getElementById("description").value;
-      const batchId = document.getElementById("batchId").value;
-      const factory = document.getElementById("factory").value;
-      const logistics = document.getElementById("logistics").value;
-      const installer = document.getElementById("installer").value;
-
-      if (!description || !batchId || !factory || !logistics || !installer) {
-        alert("Please fill in all fields.");
+      if (!batchId || !desc || !factory || !logistics || !installer) {
+        statusDiv.innerText = "⚠️ Fill out all fields.";
         return;
       }
 
       try {
-        const tx = await registry.createProductBatch(description, batchId, factory, logistics, installer);
-        document.getElementById("status").innerText = "⏳ Waiting for confirmation...";
+        statusDiv.innerText = "⏳ Submitting transaction...";
+        const tx = await registry.createProductBatch(desc, batchId, factory, logistics, installer);
         await tx.wait();
-        document.getElementById("status").innerText = "✅ Batch successfully created!";
+        statusDiv.innerText = "✅ Batch created successfully!";
       } catch (err) {
         console.error(err);
-        document.getElementById("status").innerText = "❌ Error creating batch.";
+        statusDiv.innerText = "❌ Error creating batch. Check console.";
       }
     }
   </script>
