@@ -22,8 +22,116 @@
   <script>
     const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
 
-    const registryABI = [ /* your registry ABI – include full from earlier */ ];
-    const batchABI = [ /* your batch ABI – include full from earlier */ ];
+<script>
+const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
+
+const registryABI = [
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_description", "type": "string" },
+      { "internalType": "string", "name": "_batchId", "type": "string" },
+      { "internalType": "address", "name": "_factory", "type": "address" },
+      { "internalType": "address", "name": "_logistics", "type": "address" },
+      { "internalType": "address", "name": "_installer", "type": "address" }
+    ],
+    "name": "createProductBatch",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "_logistics", "type": "address" }
+    ],
+    "name": "getBatchesByLogistics",
+    "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllBatches",
+    "outputs": [{
+      "components": [
+        { "internalType": "address", "name": "contractAddress", "type": "address" },
+        { "internalType": "string", "name": "batchId", "type": "string" },
+        { "internalType": "string", "name": "description", "type": "string" },
+        { "internalType": "address", "name": "factory", "type": "address" },
+        { "internalType": "address", "name": "logistics", "type": "address" },
+        { "internalType": "address", "name": "installer", "type": "address" }
+      ],
+      "internalType": "struct ProductBatchRegistry.BatchRecord[]",
+      "name": "",
+      "type": "tuple[]"
+    }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
+const batchABI = [
+  { "inputs": [], "name": "markDelivered", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [], "name": "markInstalled", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [], "name": "markManufactured", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [], "name": "markPickedUp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  {
+    "inputs": [],
+    "name": "description",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "currentStage",
+    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
+let provider, signer, registry;
+
+async function connectWallet() {
+  if (!window.ethereum) {
+    alert("MetaMask not detected.");
+    return;
+  }
+  provider = new ethers.providers.Web3Provider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = provider.getSigner();
+
+  const userAddress = await signer.getAddress();
+  document.getElementById("walletAddress").innerText = `✅ Connected: ${userAddress}`;
+
+  registry = new ethers.Contract(registryAddress, registryABI, provider);
+}
+
+async function loadLogisticsBatches() {
+  const userAddress = await signer.getAddress();
+  const batchAddresses = await registry.getBatchesByLogistics(userAddress);
+
+  const container = document.getElementById("batchList");
+  container.innerHTML = "";
+
+  const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
+
+  for (let addr of batchAddresses) {
+    const batch = new ethers.Contract(addr, batchABI, provider);
+    const desc = await batch.description();
+    const stage = await batch.currentStage();
+
+    const div = document.createElement("div");
+    div.className = "batch";
+    div.innerHTML = `
+      <strong>Contract:</strong> ${addr}<br/>
+      <strong>Description:</strong> ${desc}<br/>
+      <strong>Current Stage:</strong> ${stages[stage]}
+    `;
+    container.appendChild(div);
+  }
+}
+</script>
 
     let provider, signer, userAddress, registry;
 
