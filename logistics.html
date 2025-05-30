@@ -82,21 +82,24 @@
 
       for (let address of batchAddresses) {
         const batch = new ethers.Contract(address, batchABI, signer);
-        const stage = await batch.currentStage();
-        const desc = await batch.description();
-        const batchId = await batch.batchId();
+const stage = await batch.currentStage();
+const desc = await batch.description();
+const batchId = await batch.batchId();
 
-        const div = document.createElement("div");
-        div.className = "batch";
-        div.innerHTML = `
-          <strong>Batch ID:</strong> ${batchId}<br/>
-          <strong>Description:</strong> ${desc}<br/>
-          <strong>Current Stage:</strong> ${stages[stage]}<br/>
-          <button onclick="markPickedUp('${address}', this)">🚛 Mark Picked Up</button>
-          <div class="qr" id="qr-${batchId}"></div>
-        `;
-        container.appendChild(div);
-      }
+const div = document.createElement("div");
+div.className = "batch";
+div.innerHTML = `
+  <strong>Batch ID:</strong> ${batchId}<br/>
+  <strong>Description:</strong> ${desc}<br/>
+  <strong>Current Stage:</strong> ${stages[stage]}<br/>
+`;
+
+if (stage === 1) { // Only allow marking picked up if stage is "Manufactured"
+  div.innerHTML += `
+    <button onclick="markPickedUp('${address}', this)">🚛 Mark Picked Up</button>
+    <div class="qr" id="qr-${batchId}"></div>
+  `;
+}
     }
 
     async function markPickedUp(address, btn) {
