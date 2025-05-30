@@ -118,7 +118,7 @@
       return;
     }
 
-    const batches = await registry.functions.getAllBatches();
+    const batches = await registry.getAllBatches();
     const container = document.getElementById("batchList");
     container.innerHTML = "";
 
