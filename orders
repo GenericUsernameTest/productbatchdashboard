@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🏗️ Create New Product Batch</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 700px; margin: auto; }
+    input, button { width: 100%; padding: 0.7rem; margin: 0.5rem 0; font-size: 1rem; }
+    button { font-weight: bold; background: #007bff; color: white; border: none; cursor: pointer; }
+    .status { margin-top: 1rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>🏗️ Create New Product Batch</h2>
+  <button onclick="connectWallet()">🔗 Connect Wallet</button>
+  <div id="walletStatus"></div>
+
+  <input id="description" placeholder="Product Description (e.g. 100 oak doors)" />
+  <input id="batchId" placeholder="Batch ID (e.g. Batch-XYZ123)" />
+  <input id="factory" placeholder="Factory Wallet Address (0x...)" />
+  <input id="logistics" placeholder="Logistics Wallet Address (0x...)" />
+  <input id="installer" placeholder="Installer Wallet Address (0x...)" />
+
+  <button onclick="createBatch()">🚀 Create Batch</button>
+  <div class="status" id="status"></div>
+
+  <script>
+    const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
+
+    const registryABI = [
+      {
+        "inputs": [
+          { "internalType": "string", "name": "_description", "type": "string" },
+          { "internalType": "string", "name": "_batchId", "type": "string" },
+          { "internalType": "address", "name": "_factory", "type": "address" },
+          { "internalType": "address", "name": "_logistics", "type": "address" },
+          { "internalType": "address", "name": "_installer", "type": "address" }
+        ],
+        "name": "createProductBatch",
+        "outputs": [
+          { "internalType": "address", "name": "", "type": "address" }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+
+    let provider, signer, registry;
+
+    async function connectWallet() {
+      if (!window.ethereum) {
+        alert("Please install MetaMask.");
+        return;
+      }
+
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+
+      const address = await signer.getAddress();
+      document.getElementById("walletStatus").innerText = `✅ Connected: ${address}`;
+
+      registry = new ethers.Contract(registryAddress, registryABI, signer);
+    }
+
+    async function createBatch() {
+      if (!registry) {
+        alert("Connect your wallet first.");
+        return;
+      }
+
+      const description = document.getElementById("description").value;
+      const batchId = document.getElementById("batchId").value;
+      const factory = document.getElementById("factory").value;
+      const logistics = document.getElementById("logistics").value;
+      const installer = document.getElementById("installer").value;
+
+      if (!description || !batchId || !factory || !logistics || !installer) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      try {
+        const tx = await registry.createProductBatch(description, batchId, factory, logistics, installer);
+        document.getElementById("status").innerText = "⏳ Waiting for confirmation...";
+        await tx.wait();
+        document.getElementById("status").innerText = "✅ Batch successfully created!";
+      } catch (err) {
+        console.error(err);
+        document.getElementById("status").innerText = "❌ Error creating batch.";
+      }
+    }
+  </script>
+</body>
+</html>
