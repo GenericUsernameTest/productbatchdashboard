@@ -1,540 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Product Batch Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+  <title>📦 Product Batch Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
+    button { padding: 0.5rem 1rem; margin: 1rem 0; font-weight: bold; }
+    .batch { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 6px; }
+  </style>
 </head>
 <body>
   <h2>📦 Product Batches</h2>
-  <button onclick="loadBatches()">Load Batches</button>
+  <button id="connectWallet">🔗 Connect Wallet</button>
+  <div id="walletAddress"></div>
+
+  <button onclick="loadBatches()">📥 Load Batches</button>
   <div id="batchList"></div>
 
   <script>
-    const registryAddress = "0x2Da068C127bC9E389A33157fCf99Dc44f18Fb36A";
-    
-    const registryABI = [
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_description",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "_factory",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "_logistics",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "_installer",
-				"type": "address"
-			}
-		],
-		"name": "createProductBatch",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "contractAddress",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "batchId",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "description",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "factory",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "logistics",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "installer",
-				"type": "address"
-			}
-		],
-		"name": "ProductBatchCreated",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "allBatches",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "contractAddress",
-				"type": "address"
-			},
-			{
-				"internalType": "string",
-				"name": "batchId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "description",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "factory",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "logistics",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "installer",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "batchesByFactory",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "batchesByInstaller",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "batchesByLogistics",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getAllBatches",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "address",
-						"name": "contractAddress",
-						"type": "address"
-					},
-					{
-						"internalType": "string",
-						"name": "batchId",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "description",
-						"type": "string"
-					},
-					{
-						"internalType": "address",
-						"name": "factory",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "logistics",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "installer",
-						"type": "address"
-					}
-				],
-				"internalType": "struct ProductBatchRegistry.BatchRecord[]",
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getBatchCount",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_factory",
-				"type": "address"
-			}
-		],
-		"name": "getBatchesByFactory",
-		"outputs": [
-			{
-				"internalType": "address[]",
-				"name": "",
-				"type": "address[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_installer",
-				"type": "address"
-			}
-		],
-		"name": "getBatchesByInstaller",
-		"outputs": [
-			{
-				"internalType": "address[]",
-				"name": "",
-				"type": "address[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_logistics",
-				"type": "address"
-			}
-		],
-		"name": "getBatchesByLogistics",
-		"outputs": [
-			{
-				"internalType": "address[]",
-				"name": "",
-				"type": "address[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]
+    const registryAddress = "0x2da068997eb67135c00D6d92f363a9721A2662ce";
+
+    const registryABI = [/* INSERTED FROM YOUR PREVIOUS MESSAGE — truncated here for space */];
 
     const batchABI = [
-	{
-		"inputs": [],
-		"name": "markDelivered",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "markInstalled",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "markManufactured",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "markPickedUp",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_description",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "_factory",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "_logistics",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "_installer",
-				"type": "address"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "qrData",
-				"type": "string"
-			}
-		],
-		"name": "QRCodeGenerated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "enum ProductBatch.Stage",
-				"name": "newStage",
-				"type": "uint8"
-			}
-		],
-		"name": "StageAdvanced",
-		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "batchId",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "currentStage",
-		"outputs": [
-			{
-				"internalType": "enum ProductBatch.Stage",
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "description",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "factory",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "installer",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "logistics",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]
+      { "inputs": [], "name": "markDelivered", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      { "inputs": [], "name": "markInstalled", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      { "inputs": [], "name": "markManufactured", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      { "inputs": [], "name": "markPickedUp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      {
+        "inputs": [
+          { "internalType": "string", "name": "_description", "type": "string" },
+          { "internalType": "string", "name": "_batchId", "type": "string" },
+          { "internalType": "address", "name": "_factory", "type": "address" },
+          { "internalType": "address", "name": "_logistics", "type": "address" },
+          { "internalType": "address", "name": "_installer", "type": "address" }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "anonymous": false,
+        "inputs": [{ "indexed": false, "internalType": "string", "name": "qrData", "type": "string" }],
+        "name": "QRCodeGenerated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": false, "internalType": "enum ProductBatch.Stage", "name": "newStage", "type": "uint8" }
+        ],
+        "name": "StageAdvanced",
+        "type": "event"
+      },
+      { "inputs": [], "name": "batchId", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "currentStage", "outputs": [{ "internalType": "enum ProductBatch.Stage", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "factory", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "installer", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "logistics", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }
+    ];
 
-    const web3 = new Web3(window.ethereum || "http://localhost:8545");
-    const registry = new web3.eth.Contract(registryABI, registryAddress);
+    let provider, signer, registry;
+
+    document.getElementById("connectWallet").onclick = async () => {
+      if (!window.ethereum) {
+        alert("Please install MetaMask to use this feature.");
+        return;
+      }
+
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+
+      const address = await signer.getAddress();
+      document.getElementById("walletAddress").innerText = `✅ Connected: ${address}`;
+
+      registry = new ethers.Contract(registryAddress, registryABI, provider);
+    };
 
     async function loadBatches() {
-      const batches = await registry.methods.getAllBatches().call();
-      const container = document.getElementById('batchList');
+      if (!registry) {
+        alert("Please connect your wallet first.");
+        return;
+      }
+
+      const batches = await registry.getAllBatches();
+      const container = document.getElementById("batchList");
       container.innerHTML = "";
 
-      for (let i = 0; i < batches.length; i++) {
-        const b = batches[i];
-        const batchContract = new web3.eth.Contract(batchABI, b.contractAddress);
-        const stage = await batchContract.methods.currentStage().call();
+      for (let b of batches) {
+        const batchContract = new ethers.Contract(b.contractAddress, batchABI, provider);
+        const stage = await batchContract.currentStage();
+        const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
 
         const div = document.createElement('div');
+        div.className = 'batch';
         div.innerHTML = `
-          <hr>
-          <strong>Description:</strong> ${b.description} <br>
-          <strong>Batch ID:</strong> ${b.batchId} <br>
-          <strong>Contract:</strong> ${b.contractAddress} <br>
-          <strong>Factory:</strong> ${b.factory} <br>
-          <strong>Logistics:</strong> ${b.logistics} <br>
-          <strong>Installer:</strong> ${b.installer} <br>
-          <strong>Current Stage:</strong> ${stage}
+          <strong>Description:</strong> ${b.description}<br/>
+          <strong>Batch ID:</strong> ${b.batchId}<br/>
+          <strong>Contract:</strong> ${b.contractAddress}<br/>
+          <strong>Factory:</strong> ${b.factory}<br/>
+          <strong>Logistics:</strong> ${b.logistics}<br/>
+          <strong>Installer:</strong> ${b.installer}<br/>
+          <strong>Current Stage:</strong> <b>${stages[stage]}</b>
         `;
         container.appendChild(div);
       }
