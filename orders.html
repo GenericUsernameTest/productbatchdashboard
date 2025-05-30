@@ -5,48 +5,43 @@
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    .navbar {
-  background-color: #1f2b32;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  margin-bottom: 2rem;
-}
-
-.navbar-left {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-.navbar-right a {
-  color: white;
-  text-decoration: none;
-  margin-left: 1rem;
-  font-weight: 500;
-  transition: opacity 0.2s;
-}
-
-.navbar-right a:hover {
-  opacity: 0.7;
-}
-    
     body {
       font-family: 'Inter', sans-serif;
       max-width: 600px;
-      margin: 2rem auto;
+      margin: 0 auto;
       padding: 1rem;
+      padding-top: 80px; /* To avoid overlap with fixed logo */
     }
+
+    .logo-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 1rem;
+      background: white;
+      z-index: 1000;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      height: 40px;
+      width: auto;
+      margin-right: auto;
+    }
+
     h2 {
       color: #1f2b32;
     }
+
     label {
       font-weight: 600;
       margin-top: 1rem;
       display: block;
     }
+
     input {
       width: 100%;
       padding: 0.5rem;
@@ -56,6 +51,7 @@
       border: 1px solid #ccc;
       font-family: 'Inter', sans-serif;
     }
+
     button {
       background-color: #1f2b32;
       color: white;
@@ -67,28 +63,24 @@
       margin-top: 1rem;
       font-family: 'Inter', sans-serif;
     }
+
     button:disabled {
       background-color: #999;
       cursor: not-allowed;
     }
+
     #status {
       margin-top: 1rem;
       font-size: 0.9rem;
     }
-
-    .logo {
-  height: 50px;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-}
-    
   </style>
 </head>
 <body>
-<div class="logo-container">
-  <img src="Asembl - Black - Transparent 2025.png" alt="Logo" class="logo" />
-</div>
+
+  <div class="logo-header">
+    <img src="asembl-logo.png" alt="Asembl Logo" class="logo" />
+  </div>
+
   <h2>New Product Batch</h2>
   <button onclick="connectWallet()">🔗 Connect Wallet</button>
   <div id="walletAddress"></div>
