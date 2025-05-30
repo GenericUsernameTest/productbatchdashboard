@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Product Batch Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+</head>
+<body>
+  <h2>📦 Product Batches</h2>
+  <button onclick="loadBatches()">Load Batches</button>
+  <div id="batchList"></div>
+
+  <script>
+    const registryAddress = "PASTE_YOUR_REGISTRY_CONTRACT_ADDRESS_HERE"; // 👈 Replace this!
+
+    const registryABI = [PASTE_YOUR_REGISTRY_ABI_HERE]; // 👈 Paste your full registry ABI JSON here
+
+    const batchABI = [PASTE_YOUR_PRODUCT_BATCH_ABI_HERE]; // 👈 Paste your full ProductBatch ABI JSON here
+
+    const web3 = new Web3(window.ethereum || "http://localhost:8545");
+    const registry = new web3.eth.Contract(registryABI, registryAddress);
+
+    async function loadBatches() {
+      const batches = await registry.methods.getAllBatches().call();
+      const container = document.getElementById('batchList');
+      container.innerHTML = "";
+
+      for (let i = 0; i < batches.length; i++) {
+        const b = batches[i];
+        const batchContract = new web3.eth.Contract(batchABI, b.contractAddress);
+        const stage = await batchContract.methods.currentStage().call();
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <hr>
+          <strong>Description:</strong> ${b.description} <br>
+          <strong>Batch ID:</strong> ${b.batchId} <br>
+          <strong>Contract:</strong> ${b.contractAddress} <br>
+          <strong>Factory:</strong> ${b.factory} <br>
+          <strong>Logistics:</strong> ${b.logistics} <br>
+          <strong>Installer:</strong> ${b.installer} <br>
+          <strong>Current Stage:</strong> ${stage}
+        `;
+        container.appendChild(div);
+      }
+    }
+  </script>
+</body>
+</html>
