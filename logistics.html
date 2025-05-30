@@ -3,12 +3,10 @@
 <head>
   <title>🚚 Logistics Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 2rem; max-width: 900px; margin: auto; }
-    button { padding: 0.5rem 1rem; margin: 0.5rem; font-weight: bold; }
-    .batch { border: 1px solid #ccc; padding: 1rem; margin: 1rem 0; border-radius: 8px; }
-    .qr { margin-top: 1rem; }
+    body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
+    button { padding: 0.5rem 1rem; margin: 1rem 0; font-weight: bold; }
+    .batch { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -16,124 +14,104 @@
   <button id="connectWallet">🔗 Connect Wallet</button>
   <div id="walletAddress"></div>
 
-  <button onclick="loadLogisticsBatches()">📦 Load My Batches</button>
+  <button onclick="loadLogisticsBatches()">📦 Load My Assigned Batches</button>
   <div id="batchList"></div>
 
   <script>
     const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
 
-<script>
-const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
+    const registryABI = [
+      {
+        "inputs": [
+          { "internalType": "string", "name": "_description", "type": "string" },
+          { "internalType": "string", "name": "_batchId", "type": "string" },
+          { "internalType": "address", "name": "_factory", "type": "address" },
+          { "internalType": "address", "name": "_logistics", "type": "address" },
+          { "internalType": "address", "name": "_installer", "type": "address" }
+        ],
+        "name": "createProductBatch",
+        "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "contractAddress", "type": "address" },
+          { "indexed": false, "internalType": "string", "name": "batchId", "type": "string" },
+          { "indexed": false, "internalType": "string", "name": "description", "type": "string" },
+          { "indexed": false, "internalType": "address", "name": "factory", "type": "address" },
+          { "indexed": false, "internalType": "address", "name": "logistics", "type": "address" },
+          { "indexed": false, "internalType": "address", "name": "installer", "type": "address" }
+        ],
+        "name": "ProductBatchCreated",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "getAllBatches",
+        "outputs": [
+          {
+            "components": [
+              { "internalType": "address", "name": "contractAddress", "type": "address" },
+              { "internalType": "string", "name": "batchId", "type": "string" },
+              { "internalType": "string", "name": "description", "type": "string" },
+              { "internalType": "address", "name": "factory", "type": "address" },
+              { "internalType": "address", "name": "logistics", "type": "address" },
+              { "internalType": "address", "name": "installer", "type": "address" }
+            ],
+            "internalType": "struct ProductBatchRegistry.BatchRecord[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
 
-const registryABI = [
-  {
-    "inputs": [
-      { "internalType": "string", "name": "_description", "type": "string" },
-      { "internalType": "string", "name": "_batchId", "type": "string" },
-      { "internalType": "address", "name": "_factory", "type": "address" },
-      { "internalType": "address", "name": "_logistics", "type": "address" },
-      { "internalType": "address", "name": "_installer", "type": "address" }
-    ],
-    "name": "createProductBatch",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "_logistics", "type": "address" }
-    ],
-    "name": "getBatchesByLogistics",
-    "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getAllBatches",
-    "outputs": [{
-      "components": [
-        { "internalType": "address", "name": "contractAddress", "type": "address" },
-        { "internalType": "string", "name": "batchId", "type": "string" },
-        { "internalType": "string", "name": "description", "type": "string" },
-        { "internalType": "address", "name": "factory", "type": "address" },
-        { "internalType": "address", "name": "logistics", "type": "address" },
-        { "internalType": "address", "name": "installer", "type": "address" }
-      ],
-      "internalType": "struct ProductBatchRegistry.BatchRecord[]",
-      "name": "",
-      "type": "tuple[]"
-    }],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
+    const batchABI = [
+      { "inputs": [], "name": "markDelivered", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      { "inputs": [], "name": "markInstalled", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      { "inputs": [], "name": "markManufactured", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      { "inputs": [], "name": "markPickedUp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+      {
+        "inputs": [
+          { "internalType": "string", "name": "_description", "type": "string" },
+          { "internalType": "string", "name": "_batchId", "type": "string" },
+          { "internalType": "address", "name": "_factory", "type": "address" },
+          { "internalType": "address", "name": "_logistics", "type": "address" },
+          { "internalType": "address", "name": "_installer", "type": "address" }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "anonymous": false,
+        "inputs": [{ "indexed": false, "internalType": "string", "name": "qrData", "type": "string" }],
+        "name": "QRCodeGenerated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [{ "indexed": false, "internalType": "uint8", "name": "newStage", "type": "uint8" }],
+        "name": "StageAdvanced",
+        "type": "event"
+      },
+      { "inputs": [], "name": "batchId", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "currentStage", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "factory", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "installer", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "logistics", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }
+    ];
 
-const batchABI = [
-  { "inputs": [], "name": "markDelivered", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  { "inputs": [], "name": "markInstalled", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  { "inputs": [], "name": "markManufactured", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  { "inputs": [], "name": "markPickedUp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  {
-    "inputs": [],
-    "name": "description",
-    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "currentStage",
-    "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-let provider, signer, registry;
-
-async function connectWallet() {
-  if (!window.ethereum) {
-    alert("MetaMask not detected.");
-    return;
-  }
-  provider = new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
-  signer = provider.getSigner();
-
-  const userAddress = await signer.getAddress();
-  document.getElementById("walletAddress").innerText = `✅ Connected: ${userAddress}`;
-
-  registry = new ethers.Contract(registryAddress, registryABI, provider);
-}
-
-async function loadLogisticsBatches() {
-  const userAddress = await signer.getAddress();
-  const batchAddresses = await registry.getBatchesByLogistics(userAddress);
-
-  const container = document.getElementById("batchList");
-  container.innerHTML = "";
-
-  const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
-
-  for (let addr of batchAddresses) {
-    const batch = new ethers.Contract(addr, batchABI, provider);
-    const desc = await batch.description();
-    const stage = await batch.currentStage();
-
-    const div = document.createElement("div");
-    div.className = "batch";
-    div.innerHTML = `
-      <strong>Contract:</strong> ${addr}<br/>
-      <strong>Description:</strong> ${desc}<br/>
-      <strong>Current Stage:</strong> ${stages[stage]}
-    `;
-    container.appendChild(div);
-  }
-}
-</script>
-
-    let provider, signer, userAddress, registry;
+    let provider, signer, registry, userAddress;
 
     document.getElementById("connectWallet").onclick = async () => {
       if (!window.ethereum) {
@@ -145,9 +123,8 @@ async function loadLogisticsBatches() {
       await provider.send("eth_requestAccounts", []);
       signer = provider.getSigner();
       userAddress = await signer.getAddress();
-      registry = new ethers.Contract(registryAddress, registryABI, signer);
-
       document.getElementById("walletAddress").innerText = `✅ Connected: ${userAddress}`;
+      registry = new ethers.Contract(registryAddress, registryABI, provider);
     };
 
     async function loadLogisticsBatches() {
@@ -156,51 +133,34 @@ async function loadLogisticsBatches() {
         return;
       }
 
-      const batchAddresses = await registry.getBatchesByLogistics(userAddress);
+      const batches = await registry.getAllBatches();
       const container = document.getElementById("batchList");
       container.innerHTML = "";
 
       const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
 
-      for (let addr of batchAddresses) {
-        const batchContract = new ethers.Contract(addr, batchABI, signer);
-        const [description, batchId, currentStage] = await Promise.all([
-          batchContract.description(),
-          batchContract.batchId(),
-          batchContract.currentStage()
-        ]);
+      const assigned = batches.filter(b => b.logistics.toLowerCase() === userAddress.toLowerCase());
 
-        const div = document.createElement("div");
-        div.className = "batch";
+      if (assigned.length === 0) {
+        container.innerHTML = "<p>❌ No batches assigned to your logistics address.</p>";
+        return;
+      }
+
+      for (let b of assigned) {
+        const batchContract = new ethers.Contract(b.contractAddress, batchABI, provider);
+        const stage = await batchContract.currentStage();
+
+        const div = document.createElement('div');
+        div.className = 'batch';
         div.innerHTML = `
-          <strong>Batch ID:</strong> ${batchId}<br/>
-          <strong>Description:</strong> ${description}<br/>
-          <strong>Stage:</strong> <b>${stages[currentStage]}</b><br/>
-          <div id="qr-${batchId}" class="qr"></div>
-          <button onclick="advanceStage('${addr}', 'markPickedUp')">📦 Mark Picked Up</button>
-          <button onclick="advanceStage('${addr}', 'markDelivered')">🚚 Mark Delivered</button>
+          <strong>Description:</strong> ${b.description}<br/>
+          <strong>Batch ID:</strong> ${b.batchId}<br/>
+          <strong>Contract:</strong> ${b.contractAddress}<br/>
+          <strong>Factory:</strong> ${b.factory}<br/>
+          <strong>Installer:</strong> ${b.installer}<br/>
+          <strong>Stage:</strong> ${stages[stage]}
         `;
         container.appendChild(div);
-
-        // Generate QR code
-        new QRCode(document.getElementById(`qr-${batchId}`), {
-          text: `Batch ID: ${batchId}\nContract: ${addr}`,
-          width: 128,
-          height: 128
-        });
-      }
-    }
-
-    async function advanceStage(contractAddress, method) {
-      const contract = new ethers.Contract(contractAddress, batchABI, signer);
-      try {
-        const tx = await contract[method]();
-        await tx.wait();
-        alert(`✅ ${method} successful`);
-        loadLogisticsBatches(); // refresh
-      } catch (err) {
-        console.error(err);
-        alert("❌ Failed to update stage");
       }
     }
   </script>
