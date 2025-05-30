@@ -141,28 +141,34 @@
         return;
       }
 
-      const [batches] = await registry.getAllBatches(); // destructure the returned tuple
+      const batches = await registry.getAllBatches();
       const container = document.getElementById("batchList");
       container.innerHTML = "";
 
       const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
 
       for (let b of batches) {
-        const batchContract = new ethers.Contract(b.contractAddress, batchABI, provider);
-        const stage = await batchContract.currentStage();
+        if (!b.contractAddress || b.contractAddress === ethers.constants.AddressZero) continue;
 
-        const div = document.createElement('div');
-        div.className = 'batch';
-        div.innerHTML = `
-          <strong>Description:</strong> ${b.description}<br/>
-          <strong>Batch ID:</strong> ${b.batchId}<br/>
-          <strong>Contract:</strong> ${b.contractAddress}<br/>
-          <strong>Factory:</strong> ${b.factory}<br/>
-          <strong>Logistics:</strong> ${b.logistics}<br/>
-          <strong>Installer:</strong> ${b.installer}<br/>
-          <strong>Current Stage:</strong> <b>${stages[stage]}</b>
-        `;
-        container.appendChild(div);
+        try {
+          const batchContract = new ethers.Contract(b.contractAddress, batchABI, provider);
+          const stage = await batchContract.currentStage();
+
+          const div = document.createElement('div');
+          div.className = 'batch';
+          div.innerHTML = `
+            <strong>Description:</strong> ${b.description}<br/>
+            <strong>Batch ID:</strong> ${b.batchId}<br/>
+            <strong>Contract:</strong> ${b.contractAddress}<br/>
+            <strong>Factory:</strong> ${b.factory}<br/>
+            <strong>Logistics:</strong> ${b.logistics}<br/>
+            <strong>Installer:</strong> ${b.installer}<br/>
+            <strong>Current Stage:</strong> <b>${stages[stage]}</b>
+          `;
+          container.appendChild(div);
+        } catch (err) {
+          console.error("Error loading batch", err);
+        }
       }
     }
   </script>
