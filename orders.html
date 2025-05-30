@@ -10,6 +10,9 @@
       margin: 0;
       padding: 0;
       background-color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     .navbar {
@@ -60,6 +63,7 @@
       cursor: pointer;
       margin-top: 1rem;
       font-family: 'Inter', sans-serif;
+      width: 100%;
     }
 
     button:disabled {
@@ -70,6 +74,13 @@
     #status {
       margin-top: 1rem;
       font-size: 0.9rem;
+    }
+
+    .footer {
+      margin-top: auto;
+      padding: 1rem 2rem;
+      font-size: 0.8rem;
+      color: #666;
     }
   </style>
 </head>
@@ -101,6 +112,10 @@
 
     <button onclick="createBatch()">🚀 Create Batch</button>
     <div id="status"></div>
+  </div>
+
+  <div class="footer">
+    powered by Asembl Technologies
   </div>
 
   <script>
