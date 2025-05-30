@@ -147,29 +147,32 @@
 
       const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
 
-      for (let b of batches) {
-        if (!b.contractAddress || b.contractAddress === ethers.constants.AddressZero) continue;
+  for (let b of batches) {
+  if (!b.contractAddress || !ethers.utils.isAddress(b.contractAddress)) {
+    console.warn("Invalid contract address:", b.contractAddress);
+    continue; // skip invalid entries
+  }
 
-        try {
-          const batchContract = new ethers.Contract(b.contractAddress, batchABI, provider);
-          const stage = await batchContract.currentStage();
+  try {
+    const batchContract = new ethers.Contract(b.contractAddress, batchABI, provider);
+    const stage = await batchContract.currentStage();
 
-          const div = document.createElement('div');
-          div.className = 'batch';
-          div.innerHTML = `
-            <strong>Description:</strong> ${b.description}<br/>
-            <strong>Batch ID:</strong> ${b.batchId}<br/>
-            <strong>Contract:</strong> ${b.contractAddress}<br/>
-            <strong>Factory:</strong> ${b.factory}<br/>
-            <strong>Logistics:</strong> ${b.logistics}<br/>
-            <strong>Installer:</strong> ${b.installer}<br/>
-            <strong>Current Stage:</strong> <b>${stages[stage]}</b>
-          `;
-          container.appendChild(div);
-        } catch (err) {
-          console.error("Error loading batch", err);
-        }
-      }
+    const div = document.createElement('div');
+    div.className = 'batch';
+    div.innerHTML = `
+      <strong>Description:</strong> ${b.description}<br/>
+      <strong>Batch ID:</strong> ${b.batchId}<br/>
+      <strong>Contract:</strong> ${b.contractAddress}<br/>
+      <strong>Factory:</strong> ${b.factory}<br/>
+      <strong>Logistics:</strong> ${b.logistics}<br/>
+      <strong>Installer:</strong> ${b.installer}<br/>
+      <strong>Current Stage:</strong> <b>${["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"][stage]}</b>
+    `;
+    container.appendChild(div);
+  } catch (err) {
+    console.error("❌ Failed to load batch:", err);
+  }
+}
     }
   </script>
 </body>
