@@ -76,7 +76,21 @@
   <script>
     const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
 
-    const registryABI = [/* full registry ABI here */];
+    const registryABI = {
+  "inputs": [
+    { "internalType": "string", "name": "_description", "type": "string" },
+    { "internalType": "string", "name": "_batchId", "type": "string" },
+    { "internalType": "address", "name": "_factory", "type": "address" },
+    { "internalType": "address", "name": "_logistics", "type": "address" },
+    { "internalType": "address", "name": "_installer", "type": "address" }
+  ],
+  "name": "createProductBatch",
+  "outputs": [
+    { "internalType": "address", "name": "", "type": "address" }
+  ],
+  "stateMutability": "nonpayable",
+  "type": "function"
+}
 
     let provider, signer, registry;
 
