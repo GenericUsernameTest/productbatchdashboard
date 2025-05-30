@@ -42,6 +42,12 @@ border-bottom: 1px;
         font-size: 1.8rem; /* or 2rem, 24px, etc. */
     }
 
+    .divider {
+  border: none;
+  border-bottom: 1px solid #ddd; /* light grey line */
+  margin: 1.5rem 0;
+}
+    
     label {
       font-weight: 600;
       margin-top: 1rem;
@@ -99,6 +105,9 @@ border-bottom: 1px;
     <h2>New Product Order</h2>
     <button onclick="connectWallet()">Authenticate ID</button>
     <div id="walletAddress"></div>
+
+    <button onclick="connectWallet()">Connect Wallet</button>
+<hr class="divider">
 
     <label for="batchId">Batch Code</label>
     <input id="batchId" placeholder="e.g. Batch-021" />
