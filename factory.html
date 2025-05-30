@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🏭 Factory Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
+    button { padding: 0.5rem 1rem; margin: 1rem 0; font-weight: bold; }
+    .batch { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h2>🏭 Factory Dashboard</h2>
+  <button id="connectWallet">🔗 Connect Wallet</button>
+  <div id="walletAddress"></div>
+
+  <button onclick="loadFactoryBatches()">🏷 Load My Factory Batches</button>
+  <div id="batchList"></div>
+
+  <script>
+    const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
+
+    const registryABI = [
+      {
+        "inputs": [
+          { "internalType": "address", "name": "_factory", "type": "address" }
+        ],
+        "name": "getBatchesByFactory",
+        "outputs": [
+          { "internalType": "address[]", "name": "", "type": "address[]" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+
+    const batchABI = [
+      { "inputs": [], "name": "description", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "batchId", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "currentStage", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "markManufactured", "outputs": [], "stateMutability": "nonpayable", "type": "function" }
+    ];
+
+    let provider, signer, registry;
+
+    document.getElementById("connectWallet").onclick = async () => {
+      if (!window.ethereum) {
+        alert("Please install MetaMask to use this feature.");
+        return;
+      }
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+
+      const address = await signer.getAddress();
+      document.getElementById("walletAddress").innerText = `✅ Connected: ${address}`;
+
+      registry = new ethers.Contract(registryAddress, registryABI, provider);
+    };
+
+    async function loadFactoryBatches() {
+      const factoryAddress = await signer.getAddress();
+      const batchAddresses = await registry.getBatchesByFactory(factoryAddress);
+
+      const container = document.getElementById("batchList");
+      container.innerHTML = "";
+      const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
+
+      for (let address of batchAddresses) {
+        const batch = new ethers.Contract(address, batchABI, signer);
+        const [desc, id, stage] = await Promise.all([
+          batch.description(),
+          batch.batchId(),
+          batch.currentStage()
+        ]);
+
+        const div = document.createElement("div");
+        div.className = "batch";
+        div.innerHTML = `
+          <strong>Description:</strong> ${desc}<br/>
+          <strong>Batch ID:</strong> ${id}<br/>
+          <strong>Stage:</strong> ${stages[stage]}<br/>
+          <button onclick="markManufactured('${address}')">✅ Mark as Manufactured</button>
+        `;
+        container.appendChild(div);
+      }
+    }
+
+    async function markManufactured(address) {
+      const contract = new ethers.Contract(address, batchABI, signer);
+      const tx = await contract.markManufactured();
+      await tx.wait();
+      alert("✅ Batch marked as manufactured");
+      loadFactoryBatches();
+    }
+  </script>
+</body>
+</html>
