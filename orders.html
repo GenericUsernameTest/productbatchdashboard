@@ -7,29 +7,27 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 1rem;
-      padding-top: 80px; /* To avoid overlap with fixed logo */
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
     }
 
-    .logo-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      padding: 1rem;
-      background: white;
-      z-index: 1000;
-      width: 100%;
+    .navbar {
+      background-color: #fff;
       display: flex;
       align-items: center;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      padding: 1rem 2rem;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .logo {
-      height: 40px;
+    .navbar img {
+      height: 36px;
       width: auto;
-      margin-right: auto;
+    }
+
+    .main-content {
+      padding: 2rem;
+      max-width: 600px;
     }
 
     h2 {
@@ -77,31 +75,33 @@
 </head>
 <body>
 
-  <div class="logo-header">
-    <img src="asembl-logo.png" alt="Asembl Logo" class="logo" />
+  <div class="navbar">
+    <img src="asembl-logo.png" alt="Asembl Logo">
   </div>
 
-  <h2>New Product Batch</h2>
-  <button onclick="connectWallet()">🔗 Connect Wallet</button>
-  <div id="walletAddress"></div>
+  <div class="main-content">
+    <h2>New Product Batch</h2>
+    <button onclick="connectWallet()">🔗 Connect Wallet</button>
+    <div id="walletAddress"></div>
 
-  <label for="batchId">Batch ID</label>
-  <input id="batchId" placeholder="e.g. Batch-021" />
+    <label for="batchId">Batch ID</label>
+    <input id="batchId" placeholder="e.g. Batch-021" />
 
-  <label for="description">Description</label>
-  <input id="description" placeholder="e.g. 100 Door Sets" />
+    <label for="description">Description</label>
+    <input id="description" placeholder="e.g. 100 Door Sets" />
 
-  <label for="factory">Factory Address</label>
-  <input id="factory" placeholder="0x..." />
+    <label for="factory">Factory Address</label>
+    <input id="factory" placeholder="0x..." />
 
-  <label for="logistics">Logistics Address</label>
-  <input id="logistics" placeholder="0x..." />
+    <label for="logistics">Logistics Address</label>
+    <input id="logistics" placeholder="0x..." />
 
-  <label for="installer">Installer Address</label>
-  <input id="installer" placeholder="0x..." />
+    <label for="installer">Installer Address</label>
+    <input id="installer" placeholder="0x..." />
 
-  <button onclick="createBatch()">🚀 Create Batch</button>
-  <div id="status"></div>
+    <button onclick="createBatch()">🚀 Create Batch</button>
+    <div id="status"></div>
+  </div>
 
   <script>
     const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
