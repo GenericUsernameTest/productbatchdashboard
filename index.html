@@ -7,6 +7,7 @@
     body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
     button { padding: 0.5rem 1rem; margin: 1rem 0; font-weight: bold; }
     .batch { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 6px; }
+    #lastUpdated { font-style: italic; color: gray; margin-top: 1rem; }
   </style>
 </head>
 <body>
@@ -16,6 +17,7 @@
 
   <button onclick="loadBatches()">📥 Load Batches</button>
   <div id="batchList"></div>
+  <p id="lastUpdated"></p>
 
   <script>
     const registryAddress = "0xd1b76e1002206467492dfBD96eA1F3D0fdc917EC";
@@ -30,16 +32,9 @@
           { "internalType": "address", "name": "_installer", "type": "address" }
         ],
         "name": "createProductBatch",
-        "outputs": [
-          { "internalType": "address", "name": "", "type": "address" }
-        ],
+        "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
         "stateMutability": "nonpayable",
         "type": "function"
-      },
-      {
-        "inputs": [],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
       },
       {
         "anonymous": false,
@@ -95,17 +90,13 @@
       },
       {
         "anonymous": false,
-        "inputs": [
-          { "indexed": false, "internalType": "string", "name": "qrData", "type": "string" }
-        ],
+        "inputs": [{ "indexed": false, "internalType": "string", "name": "qrData", "type": "string" }],
         "name": "QRCodeGenerated",
         "type": "event"
       },
       {
         "anonymous": false,
-        "inputs": [
-          { "indexed": false, "internalType": "uint8", "name": "newStage", "type": "uint8" }
-        ],
+        "inputs": [{ "indexed": false, "internalType": "uint8", "name": "newStage", "type": "uint8" }],
         "name": "StageAdvanced",
         "type": "event"
       },
@@ -133,6 +124,8 @@
       document.getElementById("walletAddress").innerText = `✅ Connected: ${address}`;
 
       registry = new ethers.Contract(registryAddress, registryABI, signer);
+
+      loadBatches(); // Initial load after connect
     };
 
     async function loadBatches() {
@@ -147,33 +140,34 @@
 
       const stages = ["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"];
 
-  for (let b of batches) {
-  if (!b.contractAddress || !ethers.utils.isAddress(b.contractAddress)) {
-    console.warn("Invalid contract address:", b.contractAddress);
-    continue; // skip invalid entries
-  }
+      for (let b of batches) {
+        const batchContract = new ethers.Contract(b.contractAddress, batchABI, provider);
+        const stage = await batchContract.currentStage();
 
-  try {
-    const batchContract = new ethers.Contract(b.contractAddress, batchABI, provider);
-    const stage = await batchContract.currentStage();
+        const div = document.createElement('div');
+        div.className = 'batch';
+        div.innerHTML = `
+          <strong>Description:</strong> ${b.description}<br/>
+          <strong>Batch ID:</strong> ${b.batchId}<br/>
+          <strong>Contract:</strong> ${b.contractAddress}<br/>
+          <strong>Factory:</strong> ${b.factory}<br/>
+          <strong>Logistics:</strong> ${b.logistics}<br/>
+          <strong>Installer:</strong> ${b.installer}<br/>
+          <strong>Current Stage:</strong> <b>${stages[stage]}</b>
+        `;
+        container.appendChild(div);
+      }
 
-    const div = document.createElement('div');
-    div.className = 'batch';
-    div.innerHTML = `
-      <strong>Description:</strong> ${b.description}<br/>
-      <strong>Batch ID:</strong> ${b.batchId}<br/>
-      <strong>Contract:</strong> ${b.contractAddress}<br/>
-      <strong>Factory:</strong> ${b.factory}<br/>
-      <strong>Logistics:</strong> ${b.logistics}<br/>
-      <strong>Installer:</strong> ${b.installer}<br/>
-      <strong>Current Stage:</strong> <b>${["Ordered", "Manufactured", "Picked Up", "Delivered", "Installed"][stage]}</b>
-    `;
-    container.appendChild(div);
-  } catch (err) {
-    console.error("❌ Failed to load batch:", err);
-  }
-}
+      const lastUpdated = document.getElementById("lastUpdated");
+      if (lastUpdated) {
+        lastUpdated.innerText = `Last updated: ${new Date().toLocaleTimeString()}`;
+      }
     }
+
+    // 🔁 Auto-refresh every 15 seconds
+    setInterval(() => {
+      if (registry) loadBatches();
+    }, 15000);
   </script>
 </body>
 </html>
