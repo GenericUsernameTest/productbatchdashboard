@@ -109,7 +109,7 @@ border-bottom: 1px;
 
 <hr class="divider">
 
-    <label for="batchId">Batch Code</label>
+    <label for="batchId">Order Code</label>
     <input id="batchId" placeholder="e.g. Batch-021" />
 
     <label for="description">Description</label>
@@ -184,7 +184,7 @@ border-bottom: 1px;
         statusDiv.innerText = "⏳ Submitting transaction...";
         const tx = await registry.createProductBatch(desc, batchId, factory, logistics, installer);
         await tx.wait();
-        statusDiv.innerText = "✅ Batch created successfully!";
+        statusDiv.innerText = "✅ Order created successfully!";
       } catch (err) {
         console.error(err);
         statusDiv.innerText = "❌ Error creating batch. Check console.";
