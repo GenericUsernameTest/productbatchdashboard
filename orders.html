@@ -80,7 +80,13 @@ border-bottom: 1px solid #ccc;
       font-family: 'Inter', sans-serif;
       width: 100%;
     }
+.auth-button {
+  margin-top: 0.5rem;
+}
 
+.create-button {
+  margin-top: 1.5rem;
+}
     button:disabled {
       background-color: #999;
       cursor: not-allowed;
@@ -107,7 +113,7 @@ border-bottom: 1px solid #ccc;
 
   <div class="main-content">
     <h2>New Product Order</h2>
-    <button onclick="connectWallet()">Authenticate Asembl ID</button>
+    <button class="auth-button" onclick="connectWallet()">Authenticate Asembl ID</button>
     <div id="walletAddress"></div>
 
 <hr class="divider">
@@ -127,7 +133,7 @@ border-bottom: 1px solid #ccc;
     <label for="installer">Installer ID</label>
     <input id="installer" placeholder="0x..." />
 
-    <button onclick="createBatch()">Create Batch</button>
+    <button class="create-button" onclick="createBatch()">Create Batch</button>
     <div id="status"></div>
   </div>
 
